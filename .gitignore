@@ -1,0 +1,14 @@
+*.classpath
+*.project
+*.settings
+**/target
+*.factorypath
+*.sts4-cache
+debug.log
+**/.vscode
+
+# Mac/local env specific ignores
+.idea
+*.iml
+.DS_Store
+**/screenshots
