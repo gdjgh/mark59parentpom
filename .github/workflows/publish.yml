@@ -1,0 +1,33 @@
+name: Publish Parent POM to GitHub Pages
+
+on:
+  push:
+    branches: [main]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Deploy to local repo
+        run: |
+          mvn deploy -DaltDeploymentRepository=local::default::file://$(pwd)/target/mvn-repo
+        working-directory: mark59-parent
+
+      - name: Upload Pages artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: mark59-parent/target/mvn-repo
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
