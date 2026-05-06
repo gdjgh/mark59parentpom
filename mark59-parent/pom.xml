@@ -6,13 +6,13 @@
 
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>svp</groupId>
-    <artifactId>svp-parent</artifactId>
+    <groupId>mark59-parent-pom</groupId>
+    <artifactId>mark59-parent-pom</artifactId>
     <version>5.6.3.00</version>
     <packaging>pom</packaging>
 
-    <name>SVP Parent POM</name>
-    <description>Parent POM for SVP java projects</description>
+    <name>Mark59 Parent POM</name>
+    <description>Parent POM for Mark59 java projects</description>
 
     <properties>
         <maven.compiler.target>17</maven.compiler.target>
