@@ -22,6 +22,13 @@ jobs:
           distribution: temurin
           java-version: 17
 
+      - name: Extract POM version
+        id: pom-version
+        run: |
+          VERSION=$(mvn -q -Dexec.executable=echo -Dexec.args='${project.version}' --non-recursive exec:exec -f mark59-parent/pom.xml)
+          echo "version=$VERSION" >> $GITHUB_OUTPUT
+          echo "POM Version: $VERSION"
+
       - name: Deploy to local repo
         run: |
           mvn deploy -DaltDeploymentRepository=local::default::file://$(pwd)/target/mvn-repo
@@ -35,3 +42,16 @@ jobs:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v4
+
+      - name: Create Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ steps.pom-version.outputs.version }}
+          release_name: Release ${{ steps.pom-version.outputs.version }}
+          body: |
+            Automated release for version ${{ steps.pom-version.outputs.version }}
+            Published to GitHub Pages
+          draft: false
+          prerelease: false
