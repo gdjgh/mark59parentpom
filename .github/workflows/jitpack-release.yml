@@ -30,8 +30,11 @@ jobs:
           distribution: 'temurin'
 
       - name: Update POM version
-        run: |
-          sed -i "s/<version>.*<\/version>/<version>${{ github.event.inputs.version }}<\/version>/" mark59-parent/pom.xml
+        run: |          
+            cd mark59-parent
+            mvn -B versions:set \
+            -DnewVersion=${{ github.event.inputs.version }} \
+            -DgenerateBackupPoms=false
 
       - name: Verify Maven build
         run: |
