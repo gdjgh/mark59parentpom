@@ -1,0 +1,89 @@
+name: Create Release for JitPack
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Release version (e.g., 5.6.3.00)'
+        required: true
+        type: string
+      release_notes:
+        description: 'Release notes (optional)'
+        required: false
+        type: string
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Update POM version
+        run: |
+          sed -i "s/<version>.*<\/version>/<version>${{ github.event.inputs.version }}<\/version>/" mark59-parent/pom.xml
+
+      - name: Verify Maven build
+        run: |
+          cd mark59-parent
+          mvn clean verify
+
+      - name: Commit version change
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add mark59-parent/pom.xml
+          git commit -m "Release version ${{ github.event.inputs.version }}"
+
+      - name: Create Release Tag
+        run: |
+          git tag "v${{ github.event.inputs.version }}"
+          git push origin main
+          git push origin "v${{ github.event.inputs.version }}"
+
+      - name: Create GitHub Release
+        uses: actions/create-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ github.event.inputs.version }}
+          release_name: Release ${{ github.event.inputs.version }}
+          body: |
+            # Mark59 Parent POM ${{ github.event.inputs.version }}
+            
+            ${{ github.event.inputs.release_notes || 'See commit history for changes.' }}
+            
+            ## JitPack Usage
+            
+            Add to your `pom.xml`:
+            ```xml
+            <repositories>
+                <repository>
+                    <id>jitpack.io</id>
+                    <url>https://jitpack.io</url>
+                </repository>
+            </repositories>
+            
+            <parent>
+                <groupId>com.github.gdjgh</groupId>
+                <artifactId>mark59-parent-pom</artifactId>
+                <version>${{ github.event.inputs.version }}</version>
+            </parent>
+            ```
+          draft: false
+          prerelease: false
+
+      - name: Notify JitPack
+        run: |
+          echo "Release created! JitPack will automatically build the package."
+          echo "Monitor at: https://jitpack.io/#gdjgh/mark59parentpom/${{ github.event.inputs.version }}"
