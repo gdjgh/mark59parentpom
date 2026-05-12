@@ -18,6 +18,7 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,10 +30,10 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Update POM version
-        run: |          
-            cd mark59-parent
-            mvn -B versions:set \
+      - name: Set project version safely
+        run: |
+          cd mark59-parent
+          mvn -B versions:set \
             -DnewVersion=${{ github.event.inputs.version }} \
             -DgenerateBackupPoms=false
 
@@ -41,18 +42,27 @@ jobs:
           cd mark59-parent
           mvn clean verify
 
-      - name: Commit version change
+      - name: Commit version change (if needed)
         run: |
           git config --local user.email "action@github.com"
           git config --local user.name "GitHub Action"
-          git add mark59-parent/pom.xml
-          git commit -m "Release version ${{ github.event.inputs.version }}"
 
-      - name: Create Release Tag
+          if git diff --quiet; then
+            echo "No version change to commit"
+          else
+            git add mark59-parent/pom.xml
+            git commit -m "Release version ${{ github.event.inputs.version }}"
+            git push origin main
+          fi
+
+      - name: Create release tag (if not exists)
         run: |
-          git tag "v${{ github.event.inputs.version }}"
-          git push origin main
-          git push origin "v${{ github.event.inputs.version }}"
+          if git rev-parse "v${{ github.event.inputs.version }}" >/dev/null 2>&1; then
+            echo "Tag already exists"
+          else
+            git tag "v${{ github.event.inputs.version }}"
+            git push origin "v${{ github.event.inputs.version }}"
+          fi
 
       - name: Create GitHub Release
         uses: actions/create-release@v1
@@ -63,24 +73,25 @@ jobs:
           release_name: Release ${{ github.event.inputs.version }}
           body: |
             # Mark59 Parent POM ${{ github.event.inputs.version }}
-            
+
             ${{ github.event.inputs.release_notes || 'See commit history for changes.' }}
-            
+
             ## JitPack Usage
-            
+
             Add to your `pom.xml`:
+
             ```xml
             <repositories>
-                <repository>
-                    <id>jitpack.io</id>
-                    <url>https://jitpack.io</url>
-                </repository>
+              <repository>
+                <id>jitpack.io</id>
+                <url>https://jitpack.io</url>
+              </repository>
             </repositories>
-            
+
             <parent>
-                <groupId>com.github.gdjgh</groupId>
-                <artifactId>mark59-parent-pom</artifactId>
-                <version>${{ github.event.inputs.version }}</version>
+              <groupId>com.github.gdjgh</groupId>
+              <artifactId>mark59-parent-pom</artifactId>
+              <version>${{ github.event.inputs.version }}</version>
             </parent>
             ```
           draft: false
@@ -88,5 +99,5 @@ jobs:
 
       - name: Notify JitPack
         run: |
-          echo "Release created! JitPack will automatically build the package."
+          echo "Release created!"
           echo "Monitor at: https://jitpack.io/#gdjgh/mark59parentpom/${{ github.event.inputs.version }}"
