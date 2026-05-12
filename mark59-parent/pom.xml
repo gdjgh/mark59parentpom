@@ -32,7 +32,7 @@
         <batik.version>1.17</batik.version>
     </properties>
 
-	<dependencyManagement>
+
 		<dependencies>
 
 			<!-- over ride versions - for chromium 138
@@ -248,7 +248,7 @@
 			</dependency>
 
 		</dependencies>
-	</dependencyManagement>
+
 
     <build>
 		<plugins>
